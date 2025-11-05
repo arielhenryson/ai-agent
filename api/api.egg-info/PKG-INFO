@@ -26,7 +26,7 @@ Create and activate a Conda environment:
 Open your terminal and run the following commands. This will create a new environment named ai-agent with Python 3.11 and activate it.
 
 ```bash
-conda create --name ai-agent python=3.12 -y
+conda create --name ai-agent python=3.11 -y
 conda activate ai-agent
 ```
 

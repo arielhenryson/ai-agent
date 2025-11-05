@@ -1,0 +1,34 @@
+<section id="login-section" class="min-h-screen flex fade-in">
+  <!-- Login Form Section -->
+  <div
+    class="flex flex-col justify-center items-center w-full lg:w-1/2 p-8 sm:p-12 bg-gradient-to-br from-blue-900 via-gray-900 to-black bg-[length:200%_200%] animate-[gradientMove_10s_ease_infinite]"
+  >
+    <div class="w-full max-w-md">
+      <!-- Logo/Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-extrabold text-white">Welcome to AI Agent</h1>
+        <p class="text-gray-400 mt-2">Sign in to your account</p>
+      </div>
+
+      <!-- Login Buttons -->
+      <div class="space-y-4">
+        <!-- Login Button -->
+        <button
+          (click)="login()"
+          type="button"
+          class="w-full flex items-center justify-center py-3 px-4 border border-white/20 rounded-lg shadow-sm text-sm font-medium text-gray-200 bg-white/5 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 ring-spotify-green transition-colors duration-300 cursor-pointer"
+        >
+          Sign in
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Section -->
+  <div
+    class="hidden lg:flex w-1/2 bg-cover bg-center"
+    style="
+      background-image: url('https://placehold.co/1000x1200/111827/fff?text=AIAgent');
+    "
+  ></div>
+</section>

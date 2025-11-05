@@ -1,0 +1,19 @@
+data_sources:
+    - name:  Coustomers
+      type:  sqllite
+      description: The main coustomers database
+      db_path:  /Users/arielhenryson/Desktop/data-discovery/api/api/mock_data/bank/bank.db
+
+    - name:  Credit Score
+      type:  openAPI
+      description: The credit score API to get coustomers credit score
+      url:  http://localhost:8001/openapi.json
+
+    # - name:  Bank Customers
+    #   type:  postgresql
+    #   description: The main customers database (PostgreSQL version)
+    #   host:  localhost
+    #   port:  5432
+    #   database:  bankdb
+    #   user:  user
+    #   password:  password

@@ -1,0 +1,29 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: adminQwiktrain
+      MONGO_INITDB_ROOT_PASSWORD: YnL1XfCDhMx
+    volumes:
+      - ./mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  # --- NEW POSTGRES SERVICE ---
+  postgres_db:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bankdb
+    volumes:
+      - ./postgres_data:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    restart: always
+
+volumes:
+  mongo_data:
+  postgres_data:

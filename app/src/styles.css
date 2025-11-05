@@ -1,0 +1,181 @@
+/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+body.no-scroll {
+  overflow: hidden;
+}
+
+html, body {
+  /* Prevents both scroll chaining and the rubber band/overscroll effect */
+  overscroll-behavior: none;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+  }
+  /* Simple scrollbar styling for a cleaner look */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #282828;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #535353;
+    border-radius: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #777;
+  }
+  /* Animation styles */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  .dot-flashing {
+    position: relative;
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: #9880ff;
+    color: #9880ff;
+    animation: dotFlashing 1s infinite linear alternate;
+    animation-delay: 0.5s;
+  }
+  .dot-flashing::before,
+  .dot-flashing::after {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    top: 0;
+  }
+  .dot-flashing::before {
+    left: -15px;
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: #9880ff;
+    color: #9880ff;
+    animation: dotFlashing 1s infinite alternate;
+    animation-delay: 0s;
+  }
+  .dot-flashing::after {
+    left: 15px;
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: #9880ff;
+    color: #9880ff;
+    animation: dotFlashing 1s infinite alternate;
+    animation-delay: 1s;
+  }
+
+  @keyframes dotFlashing {
+    0% {
+      background-color: #1b347f;
+    }
+    50%,
+    100% {
+      background-color: rgba(27, 52, 127, 0.2);
+    }
+  }
+
+  /* Base styles for the markdown container. 
+  This assumes your <markdown> component is, or is inside,
+  a container you can target. If not, you can apply these
+  styles more globally or to a wrapper div.
+*/
+.markdown-container {
+  font-family: inherit; /* Use the parent's font (e.g., "Inter") */
+  line-height: 1.6;
+  color: #d1d5db; /* Tailwind gray-300 (Dark mode default) */
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  /* background-color: #ffffff; */ /* Removed as requested */
+  border-radius: 8px;
+  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); */ /* Removed as it complements the background */
+}
+
+/* Headings */
+.markdown-container h1,
+.markdown-container h2,
+.markdown-container h3,
+.markdown-container h4,
+.markdown-container h5,
+.markdown-container h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.8em;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #f9fafb; /* Tailwind gray-50 (Dark mode default) */
+  border-bottom: 1px solid #374151; /* Tailwind gray-700 (Dark mode default) */
+  padding-bottom: 0.3em;
+}
+
+.markdown-container h1 {
+  font-size: 2.25em;
+}
+
+.markdown-container h2 {
+  font-size: 1.75em;
+}
+
+.markdown-container h3 {
+  font-size: 1.4em;
+}
+
+.markdown-container h4 {
+  font-size: 1.2em;
+  border-bottom: none;
+}
+
+/* Paragraphs */
+.markdown-container p {
+  margin-bottom: 1em;
+}
+
+/* Inline Code */
+.markdown-container code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  background-color: #1f2937; /* Tailwind gray-800 (Dark mode default) */
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  border-radius: 6px;
+  color: #a5b4fc; /* Tailwind indigo-300 (to match your theme) (Dark mode default) */
+}
+
+/* Lists (Unordered and Ordered) */
+.markdown-container ul,
+.markdown-container ol {
+  padding-left: 2em;
+  margin-bottom: 1em;
+}
+
+.markdown-container li {
+  margin-bottom: 0.5em;
+}
+
+/* Nested lists */
+.markdown-container ul ul,
+.markdown-container ul ol,
+.markdown-container ol ol,
+.markdown-container ol ul {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+/* Strong/Bold text */
+.markdown-container strong {
+  font-weight: 600;
+  color: #f9fafb; /* Tailwind gray-50 (Dark mode default) */
+}
+

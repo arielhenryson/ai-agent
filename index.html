@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "primary-blue": "#1b347f",
+              "theme-dark": "#121212",
+              "theme-light-dark": "#181818",
+              "theme-gray": "#282828",
+              "theme-light-gray": "#B3B3B3",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      /* Simple scrollbar styling for a cleaner look */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #282828;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #535353;
+        border-radius: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #777;
+      }
+      /* Animation styles */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      .dot-flashing {
+        position: relative;
+        width: 10px;
+        height: 10px;
+        border-radius: 5px;
+        background-color: #9880ff;
+        color: #9880ff;
+        animation: dotFlashing 1s infinite linear alternate;
+        animation-delay: 0.5s;
+      }
+      .dot-flashing::before,
+      .dot-flashing::after {
+        content: "";
+        display: inline-block;
+        position: absolute;
+        top: 0;
+      }
+      .dot-flashing::before {
+        left: -15px;
+        width: 10px;
+        height: 10px;
+        border-radius: 5px;
+        background-color: #9880ff;
+        color: #9880ff;
+        animation: dotFlashing 1s infinite alternate;
+        animation-delay: 0s;
+      }
+      .dot-flashing::after {
+        left: 15px;
+        width: 10px;
+        height: 10px;
+        border-radius: 5px;
+        background-color: #9880ff;
+        color: #9880ff;
+        animation: dotFlashing 1s infinite alternate;
+        animation-delay: 1s;
+      }
+
+      @keyframes dotFlashing {
+        0% {
+          background-color: #1b347f;
+        }
+        50%,
+        100% {
+          background-color: rgba(27, 52, 127, 0.2);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-theme-dark text-theme-light-gray">
+    <!-- Login Page Section -->
+    <section id="login-section" class="min-h-screen flex fade-in">
+      <!-- Login Form Section -->
+      <div
+        class="flex flex-col justify-center items-center w-full lg:w-1/2 p-8 sm:p-12 bg-theme-dark"
+      >
+        <div class="w-full max-w-md">
+          <!-- Logo/Header -->
+          <div class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-white">
+              Welcome to DataAgent
+            </h1>
+            <p class="text-theme-light-gray mt-2">Sign in to continue</p>
+          </div>
+
+          <!-- Login Buttons -->
+          <div class="space-y-4">
+            <!-- Login Button -->
+            <button
+              id="login-button"
+              type="button"
+              class="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-lg font-bold text-white bg-primary-blue hover:scale-105 transform transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-theme-dark focus:ring-white"
+            >
+              Continue with COIN
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image Section -->
+      <div
+        class="hidden lg:flex w-1/2 bg-cover bg-center"
+        style="
+          background-image: url('https://placehold.co/1000x1200/121212/1b347f?text=DataAgent');
+        "
+      ></div>
+    </section>
+
+    <!-- Main Chat Application (Initially Hidden) -->
+    <div
+      id="chat-section"
+      class="flex flex-col h-screen antialiased text-gray-800 hidden bg-theme-dark"
+    >
+      <!-- Header -->
+      <header
+        class="h-16 bg-black border-b border-theme-gray flex items-center justify-between px-6 flex-shrink-0"
+      >
+        <h1 class="text-xl font-bold text-white">DataAgent</h1>
+        <div class="relative">
+          <button
+            id="user-menu-button"
+            class="flex items-center focus:outline-none"
+          >
+            <img
+              class="h-10 w-10 rounded-full object-cover"
+              src="https://placehold.co/100x100/1b347f/FFFFFF?text=U"
+              alt="User avatar"
+            />
+          </button>
+          <!-- Settings Dropdown -->
+          <div
+            id="user-menu"
+            class="absolute right-0 mt-2 w-48 bg-theme-gray rounded-md shadow-lg py-1 z-10 hidden"
+          >
+            <a
+              href="#"
+              class="block px-4 py-2 text-sm text-theme-light-gray hover:bg-theme-light-dark hover:text-white"
+              >Your Profile</a
+            >
+            <a
+              href="#"
+              id="data-sources-link"
+              class="block px-4 py-2 text-sm text-theme-light-gray hover:bg-theme-light-dark hover:text-white"
+              >Data Sources</a
+            >
+            <a
+              href="#"
+              class="block px-4 py-2 text-sm text-theme-light-gray hover:bg-theme-light-dark hover:text-white"
+              >Settings</a
+            >
+            <a
+              href="#"
+              class="block px-4 py-2 text-sm text-theme-light-gray hover:bg-theme-light-dark hover:text-white"
+              >Sign out</a
+            >
+          </div>
+        </div>
+      </header>
+
+      <div class="flex flex-grow overflow-hidden">
+        <!-- Sidebar for Conversation Threads -->
+        <aside class="flex-shrink-0 w-64 bg-black flex flex-col">
+          <div class="flex-grow overflow-y-auto custom-scrollbar">
+            <nav class="p-4">
+              <a
+                href="#"
+                class="flex items-center px-3 py-2.5 text-sm font-medium bg-theme-gray text-white rounded-lg"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 mr-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                What was the revenue in 2021?
+              </a>
+              <a
+                href="#"
+                class="flex items-center mt-1 px-3 py-2.5 text-sm font-medium text-theme-light-gray hover:bg-theme-gray hover:text-white rounded-lg"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 mr-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                Current price of GOOG stock
+              </a>
+              <a
+                href="#"
+                class="flex items-center mt-1 px-3 py-2.5 text-sm font-medium text-theme-light-gray hover:bg-theme-gray hover:text-white rounded-lg"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 mr-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                Q3 Earnings Report Summary
+              </a>
+            </nav>
+          </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="flex-grow flex flex-col bg-theme-light-dark">
+          <!-- Chat Window -->
+          <div
+            id="chat-window"
+            class="flex-grow p-6 overflow-y-auto custom-scrollbar"
+          >
+            <!-- Bot Message -->
+            <div class="flex items-start gap-3 mb-6">
+              <div
+                class="flex-shrink-0 h-10 w-10 rounded-full bg-theme-gray flex items-center justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6 text-primary-blue"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <div class="flex flex-col gap-2">
+                <div
+                  class="bg-theme-gray p-4 rounded-lg rounded-tl-none shadow-sm max-w-lg"
+                >
+                  <p class="text-sm text-white">
+                    Hello! How can I assist you today?
+                  </p>
+                </div>
+                <p class="text-xs text-theme-light-gray">Bot · 1 minute ago</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Message Input -->
+          <div class="bg-theme-light-dark border-t border-theme-gray p-4">
+            <form id="chat-form" class="flex items-center space-x-4">
+              <input
+                type="text"
+                id="message-input"
+                placeholder="Type your message..."
+                autocomplete="off"
+                class="flex-grow w-full px-4 py-3 bg-theme-gray border border-transparent rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              />
+              <button
+                type="submit"
+                id="send-button"
+                class="bg-primary-blue text-white font-bold px-5 py-3 rounded-lg hover:scale-105 transform transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-theme-light-dark focus:ring-white disabled:opacity-50"
+              >
+                Send
+              </button>
+            </form>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Data Sources Modal -->
+    <div
+      id="data-sources-modal"
+      class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-20 hidden fade-in"
+    >
+      <div class="bg-theme-gray p-8 rounded-lg shadow-xl w-full max-w-md m-4">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-white">Data Sources</h2>
+          <button
+            id="close-modal-button"
+            class="text-theme-light-gray hover:text-white text-3xl leading-none"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label
+              for="data-source-file"
+              class="block text-sm font-medium text-theme-light-gray mb-2"
+              >Upload a file to use as a data source:</label
+            >
+            <input
+              type="file"
+              id="data-source-file"
+              class="w-full text-sm text-theme-light-gray file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-blue file:text-white hover:file:bg-opacity-80"
+            />
+          </div>
+          <button
+            class="mt-6 w-full bg-primary-blue text-white font-bold py-3 rounded-full hover:scale-105 transform transition-transform duration-200"
+          >
+            Save Configuration
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const loginSection = document.getElementById("login-section");
+        const chatSection = document.getElementById("chat-section");
+        const loginButton = document.getElementById("login-button");
+
+        const userMenuButton = document.getElementById("user-menu-button");
+        const userMenu = document.getElementById("user-menu");
+        const chatForm = document.getElementById("chat-form");
+        const messageInput = document.getElementById("message-input");
+        const sendButton = document.getElementById("send-button");
+        const chatWindow = document.getElementById("chat-window");
+
+        const dataSourcesLink = document.getElementById("data-sources-link");
+        const dataSourcesModal = document.getElementById("data-sources-modal");
+        const closeModalButton = document.getElementById("close-modal-button");
+
+        // --- Login Functionality ---
+        loginButton.addEventListener("click", () => {
+          loginSection.classList.add("hidden");
+          chatSection.classList.remove("hidden");
+          chatSection.classList.add("fade-in");
+        });
+
+        // --- User Menu Dropdown ---
+        userMenuButton.addEventListener("click", () => {
+          userMenu.classList.toggle("hidden");
+        });
+
+        // Hide dropdown if clicked outside
+        document.addEventListener("click", (event) => {
+          if (
+            !userMenuButton.contains(event.target) &&
+            !userMenu.contains(event.target)
+          ) {
+            userMenu.classList.add("hidden");
+          }
+        });
+
+        // --- Data Sources Modal ---
+        dataSourcesLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          userMenu.classList.add("hidden"); // Close dropdown
+          dataSourcesModal.classList.remove("hidden");
+        });
+
+        closeModalButton.addEventListener("click", () => {
+          dataSourcesModal.classList.add("hidden");
+        });
+
+        // Close modal by clicking on the background overlay
+        dataSourcesModal.addEventListener("click", (e) => {
+          if (e.target === dataSourcesModal) {
+            dataSourcesModal.classList.add("hidden");
+          }
+        });
+
+        // --- Chat Functionality ---
+        chatForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const message = messageInput.value.trim();
+          if (message) {
+            appendMessage(message, "user");
+            messageInput.value = "";
+            sendButton.disabled = true;
+            simulateDataFlow(message);
+          }
+        });
+
+        function sleep(ms) {
+          return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
+        async function simulateDataFlow(userInput) {
+          const thinkingMessageId = `thinking-${Date.now()}`;
+          appendBotMessageContainer(thinkingMessageId);
+          const thinkingContentEl = document.querySelector(
+            `#${thinkingMessageId} .message-content-area`
+          );
+
+          const steps = [
+            {
+              title: "Selecting Data Sources",
+              description:
+                "Identifying relevant databases: `production_db`, `sales_api`.",
+            },
+            {
+              title: "Exploring Data",
+              description:
+                "Scanning tables: `users`, `orders`. Found `total_revenue` column.",
+            },
+            {
+              title: "Querying Data",
+              description:
+                "Executing SQL query: `SELECT SUM(total_revenue) FROM orders;`",
+            },
+            {
+              title: "Constructing Response",
+              description:
+                "Aggregating results and generating natural language answer.",
+            },
+          ];
+
+          let completedStepsHtml = "";
+
+          for (let i = 0; i < steps.length; i++) {
+            const step = steps[i];
+
+            const currentStepHtml = `
+                        <div class="flex items-start gap-3 p-4">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-theme-light-dark flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-blue animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5" /><path stroke-linecap="round" stroke-linejoin="round" d="M20 20v-5h-5" /><path stroke-linecap="round" stroke-linejoin="round" d="M4 20v-5h5" /><path stroke-linecap="round" stroke-linejoin="round" d="M20 4v5h-5" /></svg>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <p class="text-sm font-bold text-white">${step.title}</p>
+                                <div class="flex items-center space-x-2">
+                                    <div class="dot-flashing"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+            thinkingContentEl.innerHTML = completedStepsHtml + currentStepHtml;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            await sleep(1500);
+
+            completedStepsHtml += `
+                        <div class="flex items-start gap-3 p-4 border-b border-black/20">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-theme-light-dark flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <p class="text-sm font-bold text-white">${step.title}</p>
+                                <p class="text-sm text-theme-light-gray">${step.description}</p>
+                            </div>
+                        </div>
+                    `;
+          }
+
+          const diagramHtml = `
+                    <div class="p-4">
+                        <p class="text-sm font-bold text-white mb-4">Data Processing Flow:</p>
+                        <div class="flex items-center justify-between text-white flex-wrap">
+                            <!-- Step 1 -->
+                            <div class="flex flex-col items-center text-center w-20">
+                                <div class="p-3 bg-theme-light-dark rounded-full mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                                </div>
+                                <p class="text-xs font-medium">Data Sources</p>
+                            </div>
+                            <!-- Arrow -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 text-theme-light-gray mx-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                            <!-- Step 2 -->
+                            <div class="flex flex-col items-center text-center w-20">
+                                <div class="p-3 bg-theme-light-dark rounded-full mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                </div>
+                                <p class="text-xs font-medium">Explore Data</p>
+                            </div>
+                            <!-- Arrow -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 text-theme-light-gray mx-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                            <!-- Step 3 -->
+                            <div class="flex flex-col items-center text-center w-20">
+                                <div class="p-3 bg-theme-light-dark rounded-full mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                                </div>
+                                <p class="text-xs font-medium">Query Data</p>
+                            </div>
+                            <!-- Arrow -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 text-theme-light-gray mx-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                            <!-- Step 4 -->
+                            <div class="flex flex-col items-center text-center w-20">
+                                <div class="p-3 bg-theme-light-dark rounded-full mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                </div>
+                                <p class="text-xs font-medium">Response</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+          thinkingContentEl.innerHTML = diagramHtml;
+          chatWindow.scrollTop = chatWindow.scrollHeight;
+
+          await sleep(500);
+
+          const runAgainBtnId = `run-again-${thinkingMessageId}`;
+          const exportQueryBtnId = `export-query-${thinkingMessageId}`;
+          const exploreDataBtnId = `explore-data-${thinkingMessageId}`;
+
+          const finalResponse = `
+                    <div class="p-4">
+                        <p class="text-base text-white mb-3">Based on your request, the total revenue is <strong class="text-primary-blue text-lg">$75.3 billion</strong>.</p>
+                        <div class="border-t border-black/50 pt-3">
+                            <p class="text-sm text-theme-light-gray font-medium mb-2">How this was calculated:</p>
+                            <ul class="list-none space-y-2 text-sm text-theme-light-gray">
+                                <li class="flex items-start">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                                    </svg>
+                                    <span><strong>Data Source:</strong> The agent connected to the <code class="bg-black/50 text-white/80 px-1 py-0.5 rounded text-xs">production_db</code> database.</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    <span><strong>Table Scanned:</strong> It identified and scanned the <code class="bg-black/50 text-white/80 px-1 py-0.5 rounded text-xs">orders</code> table for relevant financial data.</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                    </svg>
+                                    <span><strong>Query Executed:</strong> A SQL query was run to sum up all the values in the revenue column: <code class="bg-black/50 text-white/80 px-1.5 py-0.5 rounded text-xs">SELECT SUM(total_revenue) FROM orders;</code></span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="border-t border-black/50 p-2 flex items-center justify-end space-x-2">
+                        <button id="${runAgainBtnId}" class="text-xs font-medium text-theme-light-gray hover:text-white px-3 py-1 rounded bg-theme-light-dark/50 hover:bg-theme-light-dark transition-colors">Run again</button>
+                        <button id="${exportQueryBtnId}" class="text-xs font-medium text-theme-light-gray hover:text-white px-3 py-1 rounded bg-theme-light-dark/50 hover:bg-theme-light-dark transition-colors">Export query</button>
+                        <button id="${exploreDataBtnId}" class="text-xs font-medium text-theme-light-gray hover:text-white px-3 py-1 rounded bg-theme-light-dark/50 hover:bg-theme-light-dark transition-colors">Explore data set</button>
+                    </div>
+                `;
+          appendMessage(finalResponse, "bot", true);
+
+          // Add event listeners for the new action buttons
+          document
+            .getElementById(runAgainBtnId)
+            .addEventListener("click", () => {
+              appendMessage(`Re-running query for: "${userInput}"`, "user");
+              sendButton.disabled = true;
+              simulateDataFlow(userInput);
+            });
+
+          document
+            .getElementById(exportQueryBtnId)
+            .addEventListener("click", () => {
+              appendMessage(
+                "`SELECT SUM(total_revenue) FROM orders;` copied to clipboard.",
+                "bot"
+              );
+            });
+
+          document
+            .getElementById(exploreDataBtnId)
+            .addEventListener("click", () => {
+              appendMessage(
+                "Opening data explorer for `production_db.orders`...",
+                "bot"
+              );
+            });
+
+          sendButton.disabled = false;
+        }
+
+        function getCurrentTime() {
+          return new Date().toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "numeric",
+            hour12: true,
+          });
+        }
+
+        function formatResponse(text) {
+          return text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+        }
+
+        function appendBotMessageContainer(messageId) {
+          const messageElement = document.createElement("div");
+          messageElement.id = messageId;
+          const time = getCurrentTime();
+
+          messageElement.innerHTML = `
+                    <div class="flex items-start gap-3 mb-6">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-theme-gray flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full max-w-lg">
+                            <div class="message-content-area bg-theme-gray rounded-lg shadow-sm">
+                                <!-- Content will be injected here -->
+                            </div>
+                             <p class="text-xs text-theme-light-gray">Bot · ${time}</p>
+                        </div>
+                    </div>
+                `;
+
+          chatWindow.appendChild(messageElement);
+          chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function appendMessage(text, sender, isHtml = false) {
+          const messageElement = document.createElement("div");
+          const time = getCurrentTime();
+
+          if (sender === "user") {
+            messageElement.innerHTML = `
+                        <div class="flex items-start gap-3 justify-end mb-6">
+                            <div class="flex flex-col gap-2 items-end">
+                                <div class="bg-primary-blue text-white p-4 rounded-lg rounded-br-none shadow-sm max-w-lg">
+                                    <p class="text-sm font-medium">${text}</p>
+                                </div>
+                                <p class="text-xs text-theme-light-gray">You · ${time}</p>
+                            </div>
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center">
+                               <img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/1b347f/FFFFFF?text=U" alt="User avatar">
+                            </div>
+                        </div>
+                    `;
+          } else {
+            const contentHtml = isHtml
+              ? text
+              : `<div class="p-4"><p class="text-sm text-white">${formatResponse(
+                  text
+                )}</p></div>`;
+
+            messageElement.innerHTML = `
+                        <div class="flex items-start gap-3 mb-6">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-theme-gray flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            </div>
+                            <div class="flex flex-col gap-2 w-full max-w-lg">
+                                <div class="bg-theme-gray rounded-lg rounded-tl-none shadow-sm overflow-hidden">
+                                    ${contentHtml}
+                                </div>
+                                 <p class="text-xs text-theme-light-gray">Bot · ${time}</p>
+                            </div>
+                        </div>
+                    `;
+          }
+
+          chatWindow.appendChild(messageElement);
+          chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+      });
+    </script>
+  </body>
+</html>

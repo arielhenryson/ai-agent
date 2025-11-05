@@ -1,0 +1,597 @@
+<div class="bg-gray-900 text-gray-300">
+  <div
+    class="relative flex flex-col h-screen antialiased text-gray-100 bg-gray-900 fade-in"
+  >
+    <header
+      class="relative h-16 bg-gray-900 border-b border-gray-700 flex items-center justify-between px-6 flex-shrink-0 z-30"
+    >
+      <div class="flex items-center gap-4">
+        <button
+          (click)="isSidebarOpen.set(!isSidebarOpen())"
+          id="sidebar-toggle-button"
+          class="text-white focus:outline-none cursor-pointer p-2 rounded-lg hover:bg-gray-800 transition"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            ></path>
+          </svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">AIAgent</h1>
+      </div>
+
+      <div class="relative">
+        <button
+          #userMenuButton
+          (click)="toggleUserMenu()"
+          class="flex items-center focus:outline-none cursor-pointer rounded-full"
+        >
+          <img
+            class="h-10 w-10 rounded-full object-cover border-2 border-transparent hover:border-blue-500 transition"
+            src="https://placehold.co/100x100/1f2937/FFFFFF?text=U"
+            alt="User avatar"
+          />
+        </button>
+
+        <div
+          #userMenu
+          [class.hidden]="!isUserMenuOpen"
+          class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl py-1 z-10 origin-top-right transform transition-all duration-200"
+        >
+          <a
+            (click)="openGlobalContext()"
+            class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white rounded-md mx-1 my-0.5 cursor-pointer"
+            >Global Context</a
+          >
+          <div class="border-t border-gray-700 my-1"></div>
+          <a
+            (click)="openIdService.signOut()"
+            href="#"
+            class="block px-4 py-2 text-sm text-red-400 hover:bg-gray-700 rounded-md mx-1 my-0.5"
+            >Sign out</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden">
+      <aside
+        id="sidebar"
+        class="fixed top-0 left-0 h-full pt-16 flex-shrink-0 bg-gray-900 flex flex-col transition-transform duration-300 ease-in-out overflow-hidden w-64 z-20"
+        [class.translate-x-0]="isSidebarOpen()"
+        [class.-translate-x-full]="!isSidebarOpen()"
+      >
+        <div class="flex-grow overflow-y-auto custom-scrollbar">
+          <nav class="p-4 w-64">
+            <a
+              routerLink="/"
+              class="flex items-center w-full px-3 py-2 mb-4 text-sm font-medium bg-gray-800 text-blue-400 border border-gray-700 rounded-lg hover:bg-gray-700 hover:text-blue-300 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 mr-3"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              Start New Conversation
+            </a>
+
+            <h2 class="text-sm font-semibold text-gray-300 mb-2 px-3">
+              Recent Chats
+            </h2>
+            @for (thread of chatStore.threads(); track thread.id) {
+            <div class="relative group">
+              <a
+                (click)="goToThread(thread.id)"
+                class="flex items-center justify-between w-full mt-1 px-3 py-2.5 text-sm font-medium rounded-lg transition"
+                [class.cursor-pointer]="editingThreadId() !== thread.id"
+                [class.cursor-default]="editingThreadId() === thread.id"
+                [ngClass]="{
+                  'bg-gray-700 text-white':
+                    thread.id === chatStore.currentChat().threadId,
+                  'text-gray-400 hover:bg-gray-800 hover:text-white':
+                    thread.id !== chatStore.currentChat().threadId &&
+                    editingThreadId() !== thread.id
+                }"
+              >
+                @if (editingThreadId() === thread.id) {
+                <input
+                  type="text"
+                  [id]="'rename-input-' + thread.id"
+                  class="flex-grow bg-gray-600 text-white py-0 px-1 border-0 focus:ring-1 focus:ring-blue-500 rounded text-sm w-full"
+                  [ngModel]="editingThreadTitle()"
+                  (ngModelChange)="editingThreadTitle.set($event)"
+                  (keydown)="handleRenameKeydown($event, thread.id)"
+                  (blur)="saveRename(thread.id)"
+                  (click)="$event.stopPropagation()"
+                />
+                } @else {
+                <span class="truncate pr-4">{{ thread.title }}</span>
+                } @if (editingThreadId() !== thread.id) {
+                <button
+                  #threadMenuButton
+                  (click)="toggleThreadMenu($event, thread.id)"
+                  class="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded-full hover:bg-gray-700 transition-opacity absolute right-2 top-1/2 -translate-y-1/2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+                    />
+                  </svg>
+                </button>
+                }
+              </a>
+
+              <div
+                #threadMenu
+                [class.hidden]="openThreadMenuId() !== thread.id"
+                class="absolute right-2 -mt-2 w-36 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-1 z-20 origin-top-right transform transition-all duration-200"
+              >
+                <a
+                  (click)="startRename($event, thread)"
+                  class="flex items-center gap-2 cursor-pointer px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white rounded-md mx-1 my-0.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+                    />
+                  </svg>
+                  Rename
+                </a>
+                <a
+                  (click)="deleteThread($event, thread.id)"
+                  class="flex items-center gap-2 cursor-pointer px-4 py-2 text-sm text-red-400 hover:bg-gray-700 rounded-md mx-1 my-0.5"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  Delete
+                </a>
+              </div>
+            </div>
+            }
+          </nav>
+        </div>
+
+        <div class="flex-shrink-0 p-4 border-t border-gray-700">
+          <button
+            (click)="showSystemMessages.set(!showSystemMessages())"
+            class="flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+            [ngClass]="{
+              'text-gray-400 hover:bg-gray-800 hover:text-white':
+                !showSystemMessages(),
+              'text-white bg-gray-700 hover:bg-gray-600': showSystemMessages()
+            }"
+            [title]="
+              showSystemMessages()
+                ? 'Hide System Messages'
+                : 'Show System Messages'
+            "
+          >
+            <ng-container *ngIf="showSystemMessages(); else hiddenIcon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 flex-shrink-0"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path
+                  fill-rule="evenodd"
+                  d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </ng-container>
+
+            <ng-template #hiddenIcon>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 flex-shrink-0"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M13.477 14.89A6 6 0 015.11 6.523L2.343 3.756a1 1 0 00-1.414 1.414L16.244 17.66a1 1 0 001.414-1.414l-4.181-4.181zM10 12a2 2 0 100-4 2 2 0 000 4z"
+                  clip-rule="evenodd"
+                />
+                <path
+                  d="M.458 10C1.732 5.943 5.522 3 10 3a10.03 10.03 0 012.701.382L11.29 4.882A4.002 4.002 0 0010 6a4 4 0 00-3.938 5.43L4.303 13.19A9.953 9.953 0 01.458 10z"
+                />
+                <path
+                  d="M10 17a9.953 9.953 0 01-5.697-1.81L5.938 13.57A4 4 0 0010 14a4.002 4.002 0 001.29-.218l1.412 1.412A10.03 10.03 0 0110 17z"
+                />
+                <path
+                  d="M19.542 10c-1.274 4.057-5.022 7-9.542 7a9.953 9.953 0 01-2.697-.43L8.709 15.15A4.002 4.002 0 0010 14a4 4 0 003.938-5.43l1.755-1.755A9.953 9.953 0 0119.542 10z"
+                />
+              </svg>
+            </ng-template>
+          </button>
+        </div>
+      </aside>
+
+      <main
+        class="relative flex-grow flex flex-col bg-gray-800 transition-all duration-300 ease-in-out"
+        [class.lg:ml-64]="isSidebarOpen()"
+        [class.ml-0]="!isSidebarOpen()"
+      >
+        <div
+          #chatContainer
+          id="chat-window"
+          class="flex-grow p-6 overflow-y-auto custom-scrollbar"
+        >
+          @if (chatStore.currentChat().messages.length > 0) { @for (message of
+          chatStore.currentChat().messages; track message.id) { @if
+          (message.role === 'user') {
+          <div class="flex items-end justify-end gap-3 mb-6">
+            <div class="flex flex-col gap-2 items-end">
+              <div
+                class="bg-blue-600 p-4 rounded-xl rounded-br-none shadow-sm max-w-lg"
+              >
+                <p class="text-sm text-white whitespace-pre-wrap">
+                  {{ message.content }}
+                </p>
+              </div>
+              <p class="text-xs text-gray-400">
+                You · {{ message.timestamp | timeAgo }}
+              </p>
+            </div>
+            <div
+              class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-semibold"
+            >
+              U
+            </div>
+          </div>
+          } @if (message.role === 'model' && message.content &&
+          message.content.trim()) {
+          <div class="flex items-start gap-3 mb-6">
+            <div
+              class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 text-blue-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
+            </div>
+            <div class="flex flex-col gap-2">
+              <div
+                class="bg-gray-700 p-4 rounded-xl rounded-tl-none shadow-sm overflow-auto"
+              >
+                <div class="markdown-container">
+                  <markdown>{{ message.content }}</markdown>
+                </div>
+              </div>
+              <p class="text-xs text-gray-400">
+                Bot · {{ message.timestamp | timeAgo }}
+              </p>
+            </div>
+          </div>
+          } @if (showSystemMessages()) { @if (message.role === 'tool') { @if
+          ($any(message).type === 'tool_call') {
+          <div class="flex items-center my-4" role="log">
+            <div
+              class="flex flex-col items-center text-xs text-gray-400 bg-gray-800 border border-yellow-700/50 px-3 py-1 rounded-xl max-w-lg w-full"
+            >
+              <details class="w-full text-center">
+                <summary
+                  class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer list-none group"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 text-yellow-400 flex-shrink-0 transition-transform duration-200 group-open:rotate-90"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <span class="text-yellow-400">Calling Tool:</span>
+                  <span class="text-yellow-400 ml-1">{{
+                    $any(message.content).name
+                  }}</span>
+                </summary>
+                <pre
+                  class="text-xs bg-gray-900 p-3 rounded-md overflow-x-auto custom-scrollbar text-gray-400 whitespace-pre-wrap mt-3 text-left"
+                  >{{ $any(message.content).arguments | json }}</pre
+                >
+              </details>
+            </div>
+          </div>
+          } @if ($any(message).type === 'tool_response') {
+          <div class="flex items-center my-4" role="log">
+            <div
+              class="flex flex-col items-center text-xs text-gray-400 bg-gray-800 border border-green-700/50 px-3 py-1 rounded-xl max-w-lg w-full"
+            >
+              <details class="w-full text-center">
+                <summary
+                  class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer list-none group"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 text-green-400 flex-shrink-0 transition-transform duration-200 group-open:rotate-90"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <span class="text-green-400">Tool Response:</span>
+                  <span class="text-green-400 ml-1">{{
+                    $any(message.content).name
+                  }}</span>
+                </summary>
+
+                <div class="mt-3 text-left">
+                  @if (typeof $any(message.content).response === 'object') {
+                  <pre
+                    class="text-xs bg-gray-900 p-3 rounded-md overflow-x-auto custom-scrollbar text-gray-400 whitespace-pre-wrap"
+                    >{{ $any(message.content).response | json }}</pre
+                  >
+                  } @else {
+                  <pre
+                    class="text-xs bg-gray-900 p-3 rounded-md overflow-x-auto custom-scrollbar text-gray-400 whitespace-pre-wrap"
+                    >{{ $any(message.content).response }}</pre
+                  >
+                  }
+                </div>
+              </details>
+            </div>
+          </div>
+          } } @if (message.role === 'system') {
+          <div class="flex items-center my-4" role="log">
+            <div
+              class="flex items-center gap-2 text-xs text-gray-400 bg-gray-800 border border-blue-700/50 px-3 py-1 rounded-full"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 text-blue-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2V9a1 1 0 00-1-1H9z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span class="font-medium">System:</span>
+              <span>{{ message.content }}</span>
+            </div>
+          </div>
+          } @if (message.role === 'error') {
+          <div class="flex items-start gap-3 mb-6">
+            <div
+              class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 text-red-500"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+            <div class="flex flex-col gap-2">
+              <div
+                class="bg-gray-700 p-4 rounded-xl rounded-tl-none shadow-sm max-w-lg border border-red-500/50"
+              >
+                <p class="text-sm text-red-400 whitespace-pre-wrap">
+                  {{ message.content }}
+                </p>
+              </div>
+              <p class="text-xs text-gray-400">
+                System · {{ message.timestamp | timeAgo }}
+              </p>
+            </div>
+          </div>
+          } } } @if (chatStore.currentChat().waitingForResponse) {
+          <div class="flex items-start gap-3 mb-6">
+            <div
+              class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 text-blue-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
+            </div>
+            <div
+              class="bg-gray-700 p-4 rounded-xl rounded-tl-none shadow-sm max-w-lg"
+            >
+              <div class="flex items-center justify-center space-x-2">
+                <div
+                  class="h-2 w-2 bg-gray-400 rounded-full animate-blink"
+                ></div>
+                <div
+                  class="h-2 w-2 bg-gray-400 rounded-full animate-blink [animation-delay:0.2s]"
+                ></div>
+                <div
+                  class="h-2 w-2 bg-gray-400 rounded-full animate-blink [animation-delay:0.4s]"
+                ></div>
+              </div>
+            </div>
+          </div>
+          } } @else { @if (chatStore.currentChat().waitingForResponse) {
+          <div class="flex items-center justify-center h-full">
+            <div class="flex items-start gap-3">
+              <div
+                class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6 text-blue-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path>
+                </svg>
+              </div>
+              <div
+                class="bg-gray-700 p-4 rounded-xl rounded-tl-none shadow-sm max-w-lg"
+              >
+                <div class="flex items-center justify-center space-x-2">
+                  <div
+                    class="h-2 w-2 bg-gray-400 rounded-full animate-blink"
+                  ></div>
+                  <div
+                    class="h-2 w-2 bg-gray-400 rounded-full animate-blink [animation-delay:0.2s]"
+                  ></div>
+                  <div
+                    class="h-2 w-2 bg-gray-400 rounded-full animate-blink [animation-delay:0.4s]"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          } @else {
+          <div
+            class="flex flex-col items-center justify-center h-full text-center text-gray-500"
+          >
+            <svg
+              class="w-20 h-20 mb-6 text-gray-700"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19 14.5M12 14.5v5.25c0 .621-.504 1.125-1.125 1.125H6.125c-.621 0-1.125-.504-1.125-1.125V14.5m12 0v5.25c0 .621-.504 1.125-1.125 1.125h-4.5c-.621 0-1.125-.504-1.125-1.125V14.5"
+              />
+            </svg>
+            <h2 class="text-3xl font-bold text-gray-400">Hello</h2>
+            <p class="mt-2 max-w-md">How can I help you today?</p>
+          </div>
+          } }
+        </div>
+
+        <div class="bg-gray-800 border-t border-gray-700 p-4">
+          <div class="flex items-end space-x-4">
+            <textarea
+              #messageInput
+              id="message-input"
+              name="message"
+              [(ngModel)]="messageContent"
+              (keydown)="handleKeydown($event)"
+              placeholder="Type your message..."
+              autocomplete="off"
+              rows="1"
+              class="chat-input flex-grow w-full px-4 bg-gray-700 border border-transparent rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 transition-all duration-100 ease-linear"
+              [disabled]="chatStore.currentChat().waitingForResponse"
+              (ngSubmit)="sendMessage()"
+            ></textarea>
+
+            @if (!chatStore.currentChat().waitingForResponse) {
+            <button
+              (click)="sendMessage()"
+              type="button"
+              id="send-button"
+              [disabled]="!messageContent().trim()"
+              class="flex-shrink-0 bg-blue-600 text-white font-bold px-5 py-3 rounded-lg hover:scale-105 transform transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+            >
+              Send
+            </button>
+            } @else {
+            <button
+              (click)="cancelRequest()"
+              type="button"
+              id="cancel-button"
+              class="flex-shrink-0 bg-transparent border border-gray-500 text-gray-300 font-bold px-5 py-3 rounded-lg hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white cursor-pointer"
+            >
+              Cancel
+            </button>
+            }
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+@if (isConfirmDialogOpen()) {
+<app-confirm-dialog
+  title="Delete Conversation"
+  message="Are you sure you want to permanently delete this conversation? This action cannot be undone."
+  confirmText="Delete"
+  (confirmed)="handleConfirmation($event)"
+/>
+} @if (isGlobalContextModalOpen()) {
+<app-global-context-modal
+  [initialContext]="chatStore.globalContext()"
+  (closeRequested)="isGlobalContextModalOpen.set(false)"
+  (saveContext)="handleSaveGlobalContext($event)"
+/>
+}

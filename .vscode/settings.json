@@ -1,0 +1,36 @@
+{
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.stylelint": "explicit"
+  },
+  "workbench.editor.enablePreview": false,
+  "explorer.fileNesting.enabled": false,
+  "explorer.fileNesting.patterns": {
+    "package.json": "package-lock.json",
+    "tsconfig.json": "tsconfig.*.json",
+    "*.component.ts": "*.component.spec.ts",
+    "*.controller.ts": "*.controller.spec.ts",
+    "*.service.ts": "*.service.spec.ts",
+  },
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "stylelint.validate": [
+    "css",
+    "scss"
+  ]
+}

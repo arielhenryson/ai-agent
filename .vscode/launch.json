@@ -21,7 +21,7 @@
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}/api",
-      "python": "/opt/miniconda3/envs/data-agent/bin/python",
+      "python": "/opt/miniconda3/envs/ai-agent/bin/python",
       "module": "uvicorn",
       "args": [
         "api.main:app",

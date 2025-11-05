@@ -5,9 +5,8 @@ import logging
 from typing import AsyncGenerator, List, Dict, Any
 
 from ..llm.llm import LLM
-from .tools.get_current_weather import get_current_weather
 from .tools.sql_explorer_tool import sql_explorer_tool
-from .tools.sql_query_tool import sql_query_tool
+from .tools.answer_sql_query_tool import answer_sql_query_tool
 from .tools.url_fetch_tool import url_fetch_tool
 
 logger = logging.getLogger(__name__)
@@ -41,19 +40,23 @@ class Agent:
             print(f"Error loading 'data_sources.yaml': {e}")
         return ""  # <-- Return an empty string on failure
 
-    def _build_prompt_from_template(self, new_user_text: str, history: List[Dict[str, str]]) -> str:
+    # Added 'global_context' parameter
+    def _build_prompt_from_template(self, new_user_text: str, history: List[Dict[str, str]], global_context: str) -> str:
         return self.prompt_template.render(
             data_sources=self.data_sources_text,
             history=history,
-            new_user_text=new_user_text
+            new_user_text=new_user_text,
+            global_context=global_context  # <-- Pass it to the template
         )
 
+    # Added 'global_context' parameter
     async def stream_response(
         self,
         user_text: str,
         thread_id: str,
         user_id: str,
-        history: List[Dict[str, str]]
+        history: List[Dict[str, str]],
+        global_context: str  # <-- Accept it here
     ) -> AsyncGenerator[Dict[str, Any], None]:
         print(
             f"Agent received request for thread '{thread_id}' from user '{user_id}'.")
@@ -71,8 +74,12 @@ class Agent:
             }
             return
 
-        full_prompt = self._build_prompt_from_template(user_text, history)
-        llm_response_stream = self.run(prompt=full_prompt)
+        # Pass 'global_context' when building the prompt
+        full_prompt = self._build_prompt_from_template(
+            user_text, history, global_context)
+
+        llm_response_stream = self.run(
+            prompt=full_prompt, thread_id=thread_id, user_id=user_id)
 
         async for chunk in llm_response_stream:
             yield {
@@ -81,7 +88,7 @@ class Agent:
                 "content": chunk
             }
 
-    async def run(self, prompt: str) -> AsyncGenerator[str, None]:
+    async def run(self, prompt: str, thread_id: str, user_id: str) -> AsyncGenerator[str, None]:
         """Wrapper for the LLM call that simulates streaming."""
         print(f"\n--- LLM Prompt ---\n{prompt}\n--------------------\n")
 
@@ -90,10 +97,11 @@ class Agent:
         response_text, metadata = await self.llm.run(
             prompt=prompt,
             delay_ms=1000 * 10,
+            thread_id=thread_id,
+            user_id=user_id,
             tools=[
-                get_current_weather,
                 sql_explorer_tool,
-                sql_query_tool,
+                answer_sql_query_tool,
                 url_fetch_tool
             ]
         )
@@ -105,14 +113,12 @@ class Agent:
             logger.info(
                 f"Token usage: {metadata['final_response_object'].usage_metadata}")
 
-        # --- THIS IS THE ENHANCED FIX ---
         if not response_text:
             logger.warning(
                 "LLM returned an empty final response. Checking for last tool output...")
 
             last_tool_output = None
 
-            # This is the key we added in llm.py
             intermediate_steps_key = 'intermediate_steps'
 
             try:
@@ -146,7 +152,5 @@ class Agent:
                 yield "I'm sorry, but an unexpected error occurred while processing your request. Please try again."
 
             return  # Stop execution here
-        # --- END OF ENHANCED FIX ---
 
-        # Yield just the text result to the streaming consumer
         yield response_text

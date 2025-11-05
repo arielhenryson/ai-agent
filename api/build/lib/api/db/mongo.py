@@ -1,16 +1,14 @@
-# db/mongo.py
-
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 from bson import ObjectId
 import sys
 from datetime import datetime, timedelta, timezone
-import logging  # <-- ENSURE THIS IS HERE
+import logging
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)  # <-- ENSURE THIS IS HERE
+logger = logging.getLogger(__name__)
 
 MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = os.getenv("DB_NAME")
@@ -29,9 +27,9 @@ class MongoManager:
         self.db = self.client[DB_NAME]
         self.threads_collection = self.db.get_collection("threads")
         self.sql_reports_cache = self.db.get_collection("sql_reports_cache")
-        print("MongoDB connection initialized (including threads and sql_reports_cache).")
-
-    # ... (all your existing methods like format_thread, create_indexes, create_thread, etc. remain unchanged) ...
+        self.global_context_collection = self.db.get_collection(
+            "global_context")
+        print("MongoDB connection initialized (including threads, sql_reports_cache, and global_context).")
 
     @staticmethod
     def format_thread(thread: dict) -> dict:
@@ -58,6 +56,7 @@ class MongoManager:
     async def create_indexes(self):
         await self.threads_collection.create_index("user_id")
         await self.sql_reports_cache.create_index("db_path", unique=True)
+        await self.global_context_collection.create_index("user_id", unique=True)
         print("MongoDB indexes have been created/verified.")
 
     async def create_thread(self, thread_doc: dict):
@@ -80,13 +79,10 @@ class MongoManager:
             }
         )
 
-    # --- vvv MODIFIED FUNCTION vvv ---
     async def update_message_content(self, thread_id: str, message_id: ObjectId, new_content: str):
         """
         Updates the 'content' field of a specific embedded message.
         """
-
-        # --- ADDED DEBUGGING ---
         filter_query = {"_id": thread_id, "messages._id": message_id}
         update_query = {"$set": {"messages.$.content": new_content}}
 
@@ -95,8 +91,6 @@ class MongoManager:
                 filter_query,
                 update_query
             )
-
-            # Log the result of the update operation
             if update_result.matched_count == 0:
                 logger.warning(
                     f"DB_UPDATE_FAILED: No document matched the filter. "
@@ -112,14 +106,11 @@ class MongoManager:
                     f"DB_UPDATE_SUCCESS: Successfully updated message. "
                     f"thread_id='{thread_id}', message_id='{message_id}'"
                 )
-
         except Exception as e:
             logger.error(
                 f"DB_UPDATE_ERROR: Exception during message content update for "
                 f"thread_id='{thread_id}', message_id='{message_id}': {e}"
             )
-        # --- END OF DEBUGGING ---
-    # --- ^^^ END OF MODIFIED FUNCTION ^^^ ---
 
     async def update_full_message(self, thread_id: str, message_id: ObjectId, full_message_payload: dict):
         """Updates an existing embedded message with a full payload (for non-streaming types)."""
@@ -157,8 +148,64 @@ class MongoManager:
         delete_result = await self.threads_collection.delete_one({"_id": thread_id, "user_id": user_id})
         return delete_result.deleted_count > 0
 
-    # --- CACHING METHODS ---
+    # --- vvv NEW METHOD vvv ---
+    async def rename_thread(self, thread_id: str, user_id: str, new_title: str) -> bool:
+        """Updates the 'title' of a specific thread."""
+        logger.info(
+            f"Attempting to rename thread_id '{thread_id}' for user_id '{user_id}' to '{new_title}'")
+        if not new_title:
+            logger.warning("Rename attempt failed: new_title is empty.")
+            return False
 
+        update_result = await self.threads_collection.update_one(
+            {"_id": thread_id, "user_id": user_id},
+            {"$set": {"title": new_title}}
+        )
+        if update_result.matched_count == 0:
+            logger.warning(
+                f"Rename failed: No thread found with id '{thread_id}' for user '{user_id}'")
+            return False
+
+        logger.info(f"Successfully renamed thread_id '{thread_id}'")
+        return update_result.modified_count > 0
+    # --- ^^^ END OF NEW METHOD ^^^ ---
+
+    async def get_global_context(self, user_id: str) -> str:
+        """Retrieves the global context string for a specific user."""
+        logger.info(
+            f"Attempting to get global context for user_id: '{user_id}'")
+        doc = await self.global_context_collection.find_one({"user_id": user_id})
+        if doc:
+            logger.info(f"Found global context for user_id: '{user_id}'")
+            return doc.get("context", "")
+        logger.info(f"No global context found for user_id: '{user_id}'")
+        return ""
+
+    async def save_global_context(self, user_id: str, context: str):
+        """Saves (upserts) the global context string for a specific user."""
+        logger.info(
+            f"Attempting to save global context for user_id: '{user_id}'")
+        try:
+            await self.global_context_collection.update_one(
+                {"user_id": user_id},
+                {
+                    "$set": {
+                        "context": context,
+                        "user_id": user_id,  # Ensure user_id is set on upsert
+                        "updated_at": datetime.now(timezone.utc)
+                    }
+                },
+                upsert=True
+            )
+            logger.info(
+                f"Successfully saved global context for user_id: '{user_id}'")
+        except Exception as e:
+            logger.error(
+                f"Failed to save global context for user_id '{user_id}': {e}")
+            raise
+
+    # --- CACHING METHODS ---
+    # ... (rest of the file is unchanged) ...
     async def cache_sql_report(self, db_path: str, report_content: str):
         """Saves or updates (upserts) a SQL explorer report in the cache."""
         try:
@@ -177,14 +224,10 @@ class MongoManager:
         except Exception as e:
             logger.error(f"Failed to cache SQL report for {db_path}: {e}")
 
-    # --- vvv MODIFIED FUNCTION vvv ---
-
     async def get_cached_sql_report(self, db_path: str, max_age_days: int) -> str | None:
-        """Retrieves a cached SQL report if it's not older than max_age_days."""
+        """RetrieVes a cached SQL report if it's not older than max_age_days."""
         try:
             logger.info(f"Querying cache for db_path: '{db_path}'")
-
-            # 1. Find the document by path ONLY
             cached_doc = await self.sql_reports_cache.find_one({"db_path": db_path})
 
             if not cached_doc:
@@ -192,16 +235,12 @@ class MongoManager:
                     f"No cache document found for db_path: '{db_path}'")
                 return None
 
-            # 2. Get the cached timestamp
             cached_time = cached_doc.get("cached_at")
             if not cached_time:
                 logger.warning(
                     f"Cache document for '{db_path}' found, but it has no 'cached_at' field. Will regenerate.")
                 return None
 
-            # 3. Do the date comparison in Python
-
-            # Ensure the cached_time is timezone-aware (set to UTC if naive)
             if cached_time.tzinfo is None:
                 cached_time = cached_time.replace(tzinfo=timezone.utc)
 
@@ -209,22 +248,17 @@ class MongoManager:
                 timezone.utc) - timedelta(days=max_age_days)
 
             if cached_time >= expiry_date:
-                # VALID cache
                 logger.info(
                     f"Found VALID cache for: {db_path}. Cached at: {cached_time}")
                 return cached_doc.get("report_content")
             else:
-                # EXPIRED cache
                 logger.warning(
                     f"Found an *EXPIRED* cache for {db_path}. Cached at: {cached_time} (Cutoff was: {expiry_date})")
                 return None
-
         except Exception as e:
             logger.error(
                 f"Error retrieving cached SQL report for {db_path}: {e}")
             return None
-
-    # --- ^^^ END OF MODIFIED FUNCTION ^^^ ---
 
 
 db_manager = MongoManager()

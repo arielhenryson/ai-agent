@@ -3,11 +3,11 @@
 ## Setup Local Environment with Conda
 
 Create and activate a Conda environment:
-Open your terminal and run the following commands. This will create a new environment named data-agent with Python 3.11 and activate it.
+Open your terminal and run the following commands. This will create a new environment named ai-agent with Python 3.11 and activate it.
 
 ```bash
-conda create --name data-agent python=3.11 -y
-conda activate data-agent
+conda create --name ai-agent python=3.12 -y
+conda activate ai-agent
 ```
 
 Install dependencies:
